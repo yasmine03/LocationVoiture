@@ -18,7 +18,7 @@ mongoose.connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopol
 
 // Routes
 app.get('/', (req, res) => {
-  res.send('PeYaPay Backend is running!');
+  res.send('LocationVoiture Backend is running!');
 });
 
 const PORT = process.env.PORT || 3000;
