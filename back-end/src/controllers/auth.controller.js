@@ -1,73 +1,49 @@
 import { generateToken } from "../lib/utils.js";
 import User from "../models/user.model.js";
 import bcrypt from "bcryptjs";
+import express from "express";
+import dotenv from "dotenv";
+import cors from "cors";
+import cookieParser from "cookie-parser";
+import path from "path";
+import authRoutes from "./routes/auth.route.js";
+import connectDB from "./lib/db.js";
 
+dotenv.config();
 
-export const signup = async (req, res) => {
-    const { fullName, email, phoneNumber, address, birthDate, password } = req.body;
+const app = express();
 
-//Check if all fields are filled
+const PORT = process.env.PORT || 3000; // Fallback port if not specified in .env
+const __dirname = path.resolve();
 
-    try {
+app.use(express.json());
+app.use(cookieParser());
+app.use(
+  cors({
+    origin: "http://localhost:5173",
+    credentials: true,
+  })
+);
 
-        if (!fullName || !email || !phoneNumber || !address || !birthDate || !password) {
-            return res.status(400).json({ message: "All fields are required" });
-          }
+app.use("/api/auth", authRoutes);
 
-          if (password.length < 6) {
-            return res.status(400).json({ message: "Password must be at least 6 characters" });
-          }
+if (process.env.NODE_ENV === "production") {
+  app.use(express.static(path.join(__dirname, "../frontend/dist")));
 
-//Check if user already exists
+  app.get("*", (req, res) => {
+    res.sendFile(path.join(__dirname, "../frontend", "dist", "index.html"));
+  });
+}
 
-      const user = await User.findOne({ email });
-      if (user) {
-        return res.status(400).json({ message: "User already exists" });
-      }
-      
-//Encrypt password
+app.listen(PORT, () => {
+  console.log("Server is running on PORT: " + PORT);
+  connectDB();
+});
 
-      const salt = await bcrypt.genSalt(10);
-      const hashedPassword = await bcrypt.hash(password, 10);
-
-//Create new user
-
-      const newUser = new User({
-        fullName,
-        email,
-        phoneNumber,
-        address,
-        birthDate,
-        password: hashedPassword,
-      });
-
-      if (newUser) {
-        // generate jwt token here
-        generateToken(newUser._id, res);
-        await newUser.save();
-  
-        res.status(201).json({
-          _id: newUser._id,
-          fullName: newUser.fullName,
-          email: newUser.email,
-          phoneNumber: newUser.phoneNumber,
-          address: newUser.address,
-          birthDate: newUser.birthDate,
-        });
-      } else {
-        res.status(400).json({ message: "Invalid user data" });
-      } 
-    }
-    catch (error) {
-        console.log("Error in signup controller", error.message);
-        res.status(500).json({ message: "Internal Server Error" });
-      }
-  }
-
-  export const login = async (req, res) => {
-    const { email, password } = req.body;
-    try {
-      const user = await User.findOne({ email });
+export const login = async (req, res) => {
+  const { email, password } = req.body;
+  try {
+    const user = await User.findOne({ email });
   
       if (!user) {
         return res.status(400).json({ message: "Invalid credentials" });
