@@ -3,14 +3,14 @@ import dotenv from "dotenv";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import path from "path";
-import authRoutes from "./routes/auth.route.js";
+import authRoutes from "./routes/auth.route.js"; // Import authRoutes
 import connectDB from "./lib/db.js";
 
 dotenv.config();
 
 const app = express();
 
-const PORT = process.env.PORT;
+const PORT = process.env.PORT || 3000; // Fallback port if not specified in .env
 const __dirname = path.resolve();
 
 app.use(express.json());
@@ -22,6 +22,7 @@ app.use(
   })
 );
 
+// Use authRoutes
 app.use("/api/auth", authRoutes);
 
 if (process.env.NODE_ENV === "production") {
@@ -32,7 +33,7 @@ if (process.env.NODE_ENV === "production") {
   });
 }
 
-server.listen(PORT, () => {
-  console.log("server is running on PORT:" + PORT);
+app.listen(PORT, () => {
+  console.log("Server is running on PORT: " + PORT);
   connectDB();
 });
